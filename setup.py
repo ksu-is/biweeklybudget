@@ -53,7 +53,7 @@ with open('requirements.txt') as f:
             pyver_requires.append(line.strip())
 
 classifiers = [
-    'Development Status :: 2 - Pre-Alpha',
+    'Development Status :: 4 - Beta',
     'Environment :: Web Environment',
     'Framework :: Flask',
     'Intended Audience :: End Users/Desktop',
