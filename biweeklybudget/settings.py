@@ -182,7 +182,7 @@ else:
 for varname in _STRING_VARS:
     if varname not in os.environ:
         continue
-    logger.debug('Setting %S from env var: %s', varname, os.environ[varname])
+    logger.debug('Setting %s from env var: %s', varname, os.environ[varname])
     globals()[varname] = os.environ[varname]
 
 for varname in _INT_VARS:

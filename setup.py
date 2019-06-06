@@ -97,6 +97,7 @@ setup(
     [console_scripts]
     loaddata = biweeklybudget.load_data:main
     ofxgetter = biweeklybudget.ofxgetter:main
+    plaidgetter = biweeklybudget.plaidgetter:main
     ofxbackfiller = biweeklybudget.backfill_ofx:main
     initdb = biweeklybudget.initdb:main
     wishlist2project = biweeklybudget.wishlist2project:main
