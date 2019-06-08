@@ -154,8 +154,6 @@ class PlaidGetter(object):
         logger.debug(txns)
         if write_to_file:
             fname = self._write_plaid_file(account_name, txns)
-        with open('/tmp/jantman/plaidreal.json', 'w') as fh:
-            fh.write(json.dumps(txns, sort_keys=True, indent=4))
         self._ofx_to_db(account_name, fname, txns, start_date, end_date)
         return txns
 
