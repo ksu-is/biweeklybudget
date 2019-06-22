@@ -64,7 +64,7 @@ import argparse
 import logging
 import json
 from uuid import uuid4
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_DOWN
 
 import plaid
 
@@ -213,8 +213,14 @@ class PlaidGetter(object):
         stmt = Statement()
         stmt.start_date = start_dt
         stmt.end_date = end_dt
-        stmt.balance = Decimal(acct['balances']['current'])
+        stmt.balance = Decimal(acct['balances']['current']).quantize(
+            Decimal('.01'), rounding=ROUND_HALF_DOWN
+        )
         stmt.balance_date = end_dt
+        if 'available' in acct['balances']:
+            stmt.available_balance = Decimal(
+                acct['balances']['available']
+            ).quantize(Decimal('.01'), rounding=ROUND_HALF_DOWN)
         stmt.currency = acct['balances']['iso_currency_code']
         ofx.account.statement = stmt
         stmt.transactions = []
@@ -227,7 +233,9 @@ class PlaidGetter(object):
             )
         for pt in trans:
             t = Transaction()
-            t.amount = Decimal(str(pt['amount']))
+            t.amount = Decimal(str(pt['amount'])).quantize(
+                Decimal('.01'), rounding=ROUND_HALF_DOWN
+            )
             t.date = datetime.strptime(pt["date"], '%Y-%m-%d')
             t.id = pt['payment_meta']['reference_number']
             t.payee = pt['name']
