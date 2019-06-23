@@ -232,6 +232,9 @@ class PlaidGetter(object):
                 f'transactions.'
             )
         for pt in trans:
+            if pt['pending']:
+                logger.info('Skipping pending transaction: %s', pt)
+                continue
             t = Transaction()
             t.amount = Decimal(str(pt['amount'])).quantize(
                 Decimal('.01'), rounding=ROUND_HALF_DOWN
