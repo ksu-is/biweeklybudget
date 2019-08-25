@@ -43,10 +43,14 @@ plaid-python>=3.0
 Setup
 -----
 
-1. Download the Python quickstart from:
-   https://github.com/plaid/quickstart/tree/master/python
+1. Download the Python quickstart from: https://github.com/plaid/quickstart/tree/master/python
+   * `git clone https://github.com/plaid/quickstart.git`
+   * `cd quickstart/python`
+   * `virtualenv venv && source venv/bin/activate`
+   * `pip install -r requirements.txt`
+   * `export PLAID_ENV='development'; export PLAID_PRODUCTS='transactions'; export PLAID_COUNTRY_CODES='US'`
 2. Export your real ``PLAID_`` credential environment variables.
-3. Run the quickstart.
+3. Run the quickstart (`python server.py`)
 4. Find your account and authenticate to it.
 5. Record the ITEM_ID and ACCESS_TOKEN values.
 
