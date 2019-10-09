@@ -245,6 +245,8 @@ class PlaidGetter(object):
             )
             t.date = datetime.strptime(pt["date"], '%Y-%m-%d')
             t.id = pt['payment_meta']['reference_number']
+            if t.id is None:
+                t.id = pt['transaction_id']
             t.payee = pt['name']
             stmt.transactions.append(t)
         logger.debug('Updating OFX in DB')
