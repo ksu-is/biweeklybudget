@@ -43,10 +43,14 @@ plaid-python>=3.0
 Setup
 -----
 
-1. Download the Python quickstart from:
-   https://github.com/plaid/quickstart/tree/master/python
+1. Download the Python quickstart from: https://github.com/plaid/quickstart/tree/master/python
+   * `git clone https://github.com/plaid/quickstart.git`
+   * `cd quickstart/python`
+   * `virtualenv venv && source venv/bin/activate`
+   * `pip install -r requirements.txt`
+   * `export PLAID_ENV='development'; export PLAID_PRODUCTS='transactions'; export PLAID_COUNTRY_CODES='US'`
 2. Export your real ``PLAID_`` credential environment variables.
-3. Run the quickstart.
+3. Run the quickstart (`python server.py`)
 4. Find your account and authenticate to it.
 5. Record the ITEM_ID and ACCESS_TOKEN values.
 
@@ -65,6 +69,7 @@ import logging
 import json
 from uuid import uuid4
 from decimal import Decimal, ROUND_HALF_DOWN
+import yaml
 
 import plaid
 
@@ -241,8 +246,11 @@ class PlaidGetter(object):
             )
             t.date = datetime.strptime(pt["date"], '%Y-%m-%d')
             t.id = pt['payment_meta']['reference_number']
+            if t.id is None:
+                t.id = pt['transaction_id']
             t.payee = pt['name']
             stmt.transactions.append(t)
+        logger.debug('Generated OFX:\n%s', yaml.dump(ofx))
         logger.debug('Updating OFX in DB')
         _, count_new, count_upd = self._client.update_statement_ofx(
             self._account_data[account_name]['id'], ofx, filename=fname
