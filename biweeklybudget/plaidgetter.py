@@ -222,7 +222,7 @@ class PlaidGetter(object):
             Decimal('.01'), rounding=ROUND_HALF_DOWN
         )
         stmt.balance_date = end_dt
-        if 'available' in acct['balances']:
+        if acct['balances'].get('available', None) is not None:
             stmt.available_balance = Decimal(
                 acct['balances']['available']
             ).quantize(Decimal('.01'), rounding=ROUND_HALF_DOWN)
