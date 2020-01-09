@@ -74,7 +74,8 @@ import yaml
 import plaid
 
 from ofxparse.ofxparse import (
-    Ofx, Statement, Account, Institution, Transaction, Signon, AccountType
+    Ofx, Statement, Account, Institution, Transaction, Signon, AccountType,
+    Position
 )
 
 from biweeklybudget.cliutils import set_log_debug, set_log_info
@@ -183,10 +184,6 @@ class PlaidGetter(object):
         ofx.account.institution = Institution()
         ofx.account.institution.fid = '9999'
         ofx.account.institution.organization = txns['item']['institution_id']
-        if txns['accounts'][0]['type'] == 'credit':
-            ofx.account.type = AccountType.CreditCard
-        else:
-            ofx.account.type = AccountType.Unknown
         ofx.accounts = [ofx.account]
         ofx.headers = {
             'OFXHEADER': '100',
@@ -214,7 +211,33 @@ class PlaidGetter(object):
         })
         ofx.status = {'code': 0, 'severity': 'INFO'}
         ofx.trnuid = str(uuid4()).replace('-', '')
-        # build the statement...
+        if txns['accounts'][0]['type'] == 'credit':
+            ofx.account.type = AccountType.CreditCard
+            ofx.account.statement = self._statement_for_credit(
+                start_dt, end_dt, acct, txns
+            )
+        elif txns['accounts'][0]['type'] == 'investment':
+            ofx.account.type = AccountType.Investment
+            ofx.account.statement = self._statement_for_investment(
+                start_dt, end_dt, acct
+            )
+        else:
+            raise RuntimeError(
+                'ERROR: Unknown account type: ' +
+                txns['accounts'][0].get('type', '<none>')
+            )
+        logger.debug('Generated OFX:\n%s', yaml.dump(ofx))
+        logger.debug('Updating OFX in DB')
+        _, count_new, count_upd = self._client.update_statement_ofx(
+            self._account_data[account_name]['id'], ofx, filename=fname
+        )
+        logger.info('Account "%s" - inserted %d new OFXTransaction(s), updated '
+                    '%d existing OFXTransaction(s)',
+                    account_name, count_new, count_upd)
+        logger.debug('Done updating OFX in DB')
+
+    def _statement_for_credit(self, start_dt, end_dt, acct, txns):
+        logger.debug('Generating statement for credit account')
         stmt = Statement()
         stmt.start_date = start_dt
         stmt.end_date = end_dt
@@ -227,7 +250,6 @@ class PlaidGetter(object):
                 acct['balances']['available']
             ).quantize(Decimal('.01'), rounding=ROUND_HALF_DOWN)
         stmt.currency = acct['balances']['iso_currency_code']
-        ofx.account.statement = stmt
         stmt.transactions = []
         trans = txns['transactions']
         if len(trans) != txns['total_transactions']:
@@ -250,15 +272,25 @@ class PlaidGetter(object):
                 t.id = pt['transaction_id']
             t.payee = pt['name']
             stmt.transactions.append(t)
-        logger.debug('Generated OFX:\n%s', yaml.dump(ofx))
-        logger.debug('Updating OFX in DB')
-        _, count_new, count_upd = self._client.update_statement_ofx(
-            self._account_data[account_name]['id'], ofx, filename=fname
+        return stmt
+
+    def _statement_for_investment(self, start_dt, end_dt, acct):
+        logger.debug('Generating statement for investment account')
+        stmt = Statement()
+        stmt.start_date = start_dt
+        stmt.end_date = end_dt
+        stmt.balance = Decimal(acct['balances']['current']).quantize(
+            Decimal('.01'), rounding=ROUND_HALF_DOWN
         )
-        logger.info('Account "%s" - inserted %d new OFXTransaction(s), updated '
-                    '%d existing OFXTransaction(s)',
-                    account_name, count_new, count_upd)
-        logger.debug('Done updating OFX in DB')
+        stmt.ledger_bal = stmt.balance
+        stmt.ledger_bal_as_of = end_dt
+        stmt.balance_date = end_dt
+        stmt.currency = acct['balances']['iso_currency_code']
+        stmt.transactions = []
+        stmt.positions = [Position()]
+        stmt.positions[0].market_value = stmt.ledger_bal
+        stmt.positions[0].date = stmt.ledger_bal_as_of
+        return stmt
 
     def _write_plaid_file(self, account_name, data):
         """
