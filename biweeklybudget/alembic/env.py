@@ -93,9 +93,12 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
+    echo = False
+    if os.environ.get('SQL_ECHO', '') == 'true':
+        echo = True
     connectable = create_engine(
         DB_CONNSTRING, poolclass=pool.NullPool,
-        pool_pre_ping=('SQL_POOL_PRE_PING' in os.environ)
+        pool_pre_ping=('SQL_POOL_PRE_PING' in os.environ), echo=echo
     )
 
     with connectable.connect() as connection:
