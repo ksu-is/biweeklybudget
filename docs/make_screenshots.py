@@ -33,6 +33,7 @@ either as a pull request on GitHub, or to me via email.
 
 AUTHORS:
 Jason Antman <jason@jasonantman.com> <http://www.jasonantman.com>
+Edited by <dthom310@kennesaw.edu> to improve importing.
 ################################################################################
 """
 
